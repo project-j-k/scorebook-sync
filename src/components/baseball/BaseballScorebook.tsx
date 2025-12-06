@@ -6,7 +6,7 @@ import { GameSetup } from './GameSetup';
 import { MainGameScreen } from './MainGameScreen';
 import { GameResultScreen } from './GameResultScreen';
 import { toast } from 'sonner';
-import { Play, RunnerOutInfo } from '@/types/baseball';
+import { Play, RunnerOutInfo, RunnerAdvanceInfo } from '@/types/baseball';
 
 export const BaseballScorebook = () => {
   const [state, dispatch] = useReducer(gameReducer, initialGameState);
@@ -31,9 +31,9 @@ export const BaseballScorebook = () => {
     toast.success('試合を開始しました');
   }, [isStandalone]);
 
-  const handleRecordPlay = useCallback((type: string, subType?: string, runnersOut?: RunnerOutInfo[]) => {
+  const handleRecordPlay = useCallback((type: string, subType?: string, runnersOut?: RunnerOutInfo[], runnersAdvance?: RunnerAdvanceInfo[]) => {
     const stateBefore = JSON.parse(JSON.stringify(state));
-    dispatch({ type: 'RECORD_PLAY', payload: { type, subType, runnersOut } });
+    dispatch({ type: 'RECORD_PLAY', payload: { type, subType, runnersOut, runnersAdvance } });
     if (state.id && !isStandalone) {
       pendingPlayRef.current = { play: {} as Play, stateBefore };
     }

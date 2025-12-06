@@ -41,6 +41,13 @@ export interface RunnerOutInfo {
   runnerId: string | null;
 }
 
+// Runner advance information for error/wild pitch advancement
+export interface RunnerAdvanceInfo {
+  fromBase: 'first' | 'second' | 'third';
+  toBase: 'second' | 'third' | 'home';
+  runnerId: string | null;
+}
+
 export interface Play {
   id: string;
   inning: number;
@@ -88,7 +95,7 @@ export type GameAction =
   | { type: 'SET_INNINGS'; payload: number }
   | { type: 'START_GAME' }
   | { type: 'SYNC_STATE'; payload: Partial<GameState> }
-  | { type: 'RECORD_PLAY'; payload: { type: string; subType?: string; runnersOut?: RunnerOutInfo[] } }
+  | { type: 'RECORD_PLAY'; payload: { type: string; subType?: string; runnersOut?: RunnerOutInfo[]; runnersAdvance?: RunnerAdvanceInfo[] } }
   | { type: 'UNDO_LAST'; payload?: GameState }
   | { type: 'END_GAME' }
   | { type: 'RESET_GAME' };

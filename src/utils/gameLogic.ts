@@ -1,4 +1,4 @@
-import { GameState, RunnerOutInfo } from '@/types/baseball';
+import { GameState, RunnerOutInfo, RunnerAdvanceInfo } from '@/types/baseball';
 import { advanceBatter, checkWalkoff, getCurrentBatter } from './gameUtils';
 
 export const processOut = (state: GameState, outsToAdd: number): GameState => {
@@ -196,6 +196,49 @@ export const processHomerun = (state: GameState): GameState => {
     count: { balls: 0, strikes: 0 },
     [scoreKey]: state[scoreKey] + runsScored,
     [battingTeamKey]: advanceBatter(state[battingTeamKey]),
+  };
+
+  if (checkWalkoff(newState)) {
+    return { ...newState, status: 'finished', isWalkoff: true };
+  }
+
+  return newState;
+};
+
+// Process runner advancement (error, wild pitch, passed ball)
+export const processRunnerAdvance = (state: GameState, advances: RunnerAdvanceInfo[]): GameState => {
+  let newRunners = { ...state.runners };
+  let runsScored = 0;
+
+  // Sort advances from third base first to avoid collision
+  const sortedAdvances = [...advances].sort((a, b) => {
+    const order = { third: 0, second: 1, first: 2 };
+    return order[a.fromBase] - order[b.fromBase];
+  });
+
+  for (const advance of sortedAdvances) {
+    const runnerId = newRunners[advance.fromBase];
+    if (!runnerId) continue;
+
+    // Clear the original base
+    newRunners[advance.fromBase] = null;
+
+    // Move to new base or score
+    if (advance.toBase === 'home') {
+      runsScored++;
+    } else if (advance.toBase === 'third') {
+      newRunners.third = runnerId;
+    } else if (advance.toBase === 'second') {
+      newRunners.second = runnerId;
+    }
+  }
+
+  const scoreKey = state.currentHalf === 'top' ? 'awayScore' : 'homeScore';
+
+  const newState: GameState = {
+    ...state,
+    runners: newRunners,
+    [scoreKey]: state[scoreKey] + runsScored,
   };
 
   if (checkWalkoff(newState)) {
