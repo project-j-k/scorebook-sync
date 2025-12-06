@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { GameState, GameAction, Runners, RunnerOutInfo, RunnerAdvanceInfo } from '@/types/baseball';
+import { GameState, GameAction, RunnerOutInfo, RunnerAdvanceInfo } from '@/types/baseball';
 import { getTeamColor } from '@/constants/teamColors';
 import { getCurrentBatter } from '@/utils/gameUtils';
 import { Diamond } from './Diamond';
@@ -8,7 +8,8 @@ import { LongPressButton } from './LongPressButton';
 import { SyncIndicator } from './SyncIndicator';
 import { PlayHistory } from './PlayHistory';
 import { ShareGameModal } from './ShareGameModal';
-import { Undo2, ClipboardList, Square, Share2 } from 'lucide-react';
+import { RunnerControlModal } from './RunnerControlModal';
+import { Undo2, ClipboardList, Square } from 'lucide-react';
 
 interface MainGameScreenProps {
   state: GameState;
@@ -25,10 +26,8 @@ export const MainGameScreen = ({ state, dispatch, onRecordPlay, syncStatus, shar
   const [showHistory, setShowHistory] = useState(false);
   const [showEndConfirm, setShowEndConfirm] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false);
-  const [showRunnerOutModal, setShowRunnerOutModal] = useState(false);
-  const [showRunnerAdvanceModal, setShowRunnerAdvanceModal] = useState(false);
-  const [advanceType, setAdvanceType] = useState<'error' | 'wildPitch' | 'passedBall'>('error');
-  const [isGeneratingCode, setIsGeneratingCode] = useState(false);
+  const [showRunnerControl, setShowRunnerControl] = useState(false);
+  const [isGeneratingCode] = useState(false);
 
   const battingTeam = state.currentHalf === 'top' ? state.awayTeam : state.homeTeam;
   const currentBatter = getCurrentBatter(state);
@@ -39,35 +38,9 @@ export const MainGameScreen = ({ state, dispatch, onRecordPlay, syncStatus, shar
     onRecordPlay(type, subType, runnersOut, runnersAdvance);
   };
 
-  const handleRunnerOut = (base: 'first' | 'second' | 'third') => {
-    const runnerId = state.runners[base];
-    if (runnerId) {
-      recordPlay('runnerOut', `runnerOut${base.charAt(0).toUpperCase() + base.slice(1)}`, [{ base, runnerId }]);
-    }
-    setShowRunnerOutModal(false);
-  };
-
-  const handleDoublePlay = (bases: ('first' | 'second' | 'third')[]) => {
-    const runnersOut: RunnerOutInfo[] = bases.filter(base => state.runners[base]).map(base => ({ base, runnerId: state.runners[base] }));
-    if (runnersOut.length >= 2) {
-      const subType = `doublePlay${bases.map(b => b.charAt(0).toUpperCase() + b.slice(1)).join('')}`;
-      recordPlay('out', subType, runnersOut);
-    }
-    setShowRunnerOutModal(false);
-  };
-
-  const handleRunnerAdvance = (fromBase: 'first' | 'second' | 'third', toBase: 'second' | 'third' | 'home') => {
-    const runnerId = state.runners[fromBase];
-    if (runnerId) {
-      const subType = `${advanceType}${fromBase.charAt(0).toUpperCase() + fromBase.slice(1)}To${toBase.charAt(0).toUpperCase() + toBase.slice(1)}`;
-      recordPlay('advance', subType, undefined, [{ fromBase, toBase, runnerId }]);
-    }
-    setShowRunnerAdvanceModal(false);
-  };
-
-  const openAdvanceModal = (type: 'error' | 'wildPitch' | 'passedBall') => {
-    setAdvanceType(type);
-    setShowRunnerAdvanceModal(true);
+  const handleRunnerControlConfirm = (runnersOut: RunnerOutInfo[], runnersAdvance: RunnerAdvanceInfo[], playType: string) => {
+    recordPlay('runnerControl', playType, runnersOut, runnersAdvance);
+    setShowRunnerControl(false);
   };
 
   const hasRunners = state.runners.first || state.runners.second || state.runners.third;
@@ -108,22 +81,22 @@ export const MainGameScreen = ({ state, dispatch, onRecordPlay, syncStatus, shar
               { label: 'フライアウト', onClick: () => recordPlay('out', 'flyout') },
               { label: 'ゴロアウト', onClick: () => recordPlay('out', 'groundout') },
               { label: '併殺打', onClick: () => recordPlay('out', 'doublePlay') },
-              ...(hasRunners ? [{ label: 'ランナーアウト...', onClick: () => setShowRunnerOutModal(true) }] : []),
             ]} />
             <LongPressButton label="ヒット" onClick={() => recordPlay('hit', 'single')} className="bg-primary text-primary-foreground" subOptions={[{ label: 'シングル', onClick: () => recordPlay('hit', 'single') }, { label: 'ツーベース', onClick: () => recordPlay('hit', 'double') }, { label: 'スリーベース', onClick: () => recordPlay('hit', 'triple') }]} />
             <LongPressButton label="HR" onClick={() => recordPlay('homerun')} className="bg-purple-600 text-white" />
           </div>
           <div className="grid grid-cols-2 gap-2">
             <LongPressButton label="四死球" onClick={() => recordPlay('walk')} className="bg-blue-500 text-white" subOptions={[{ label: 'フォアボール', onClick: () => recordPlay('walk') }, { label: 'デッドボール', onClick: () => recordPlay('hitByPitch') }]} />
-            <LongPressButton label="走塁" onClick={() => {}} className="bg-orange-500 text-white" subOptions={[
-              { label: '盗塁成功', onClick: () => recordPlay('steal') },
-              { label: '盗塁死', onClick: () => recordPlay('caughtStealing') },
-              ...(hasRunners ? [
-                { label: 'エラー進塁...', onClick: () => openAdvanceModal('error') },
-                { label: 'WP進塁...', onClick: () => openAdvanceModal('wildPitch') },
-                { label: 'PB進塁...', onClick: () => openAdvanceModal('passedBall') },
-              ] : []),
-            ]} />
+            <LongPressButton 
+              label="走塁" 
+              onClick={() => hasRunners ? setShowRunnerControl(true) : undefined} 
+              className="bg-orange-500 text-white" 
+              subOptions={[
+                { label: '盗塁成功', onClick: () => recordPlay('steal') },
+                { label: '盗塁死', onClick: () => recordPlay('caughtStealing') },
+                ...(hasRunners ? [{ label: 'ランナー状況...', onClick: () => setShowRunnerControl(true) }] : []),
+              ]} 
+            />
           </div>
         </div>
       )}
@@ -139,55 +112,7 @@ export const MainGameScreen = ({ state, dispatch, onRecordPlay, syncStatus, shar
 
       {showHistory && <PlayHistory plays={state.plays} onClose={() => setShowHistory(false)} />}
       {showShareModal && <ShareGameModal shareCode={shareCode} onGenerateCode={onGenerateShareCode} onClose={() => setShowShareModal(false)} isGenerating={isGeneratingCode} />}
-
-      {/* Runner Out Modal */}
-      {showRunnerOutModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl p-6 max-w-sm w-full border border-border">
-            <h3 className="text-xl font-bold mb-4">ランナーアウト</h3>
-            <div className="space-y-2">
-              {state.runners.first && <button onClick={() => handleRunnerOut('first')} className="w-full py-3 bg-red-500 text-white rounded-xl font-bold">１塁ランナーアウト</button>}
-              {state.runners.second && <button onClick={() => handleRunnerOut('second')} className="w-full py-3 bg-red-500 text-white rounded-xl font-bold">２塁ランナーアウト</button>}
-              {state.runners.third && <button onClick={() => handleRunnerOut('third')} className="w-full py-3 bg-red-500 text-white rounded-xl font-bold">３塁ランナーアウト</button>}
-              {state.runners.first && state.runners.second && <button onClick={() => handleDoublePlay(['first', 'second'])} className="w-full py-3 bg-red-700 text-white rounded-xl font-bold">併殺（１塁・２塁）</button>}
-              {state.runners.second && state.runners.third && <button onClick={() => handleDoublePlay(['second', 'third'])} className="w-full py-3 bg-red-700 text-white rounded-xl font-bold">併殺（２塁・３塁）</button>}
-            </div>
-            <button onClick={() => setShowRunnerOutModal(false)} className="w-full mt-4 py-3 bg-secondary text-foreground rounded-xl font-bold">キャンセル</button>
-          </div>
-        </div>
-      )}
-
-      {/* Runner Advance Modal */}
-      {showRunnerAdvanceModal && (
-        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-card rounded-2xl p-6 max-w-sm w-full border border-border">
-            <h3 className="text-xl font-bold mb-4">
-              {advanceType === 'error' && 'エラー進塁'}
-              {advanceType === 'wildPitch' && 'ワイルドピッチ進塁'}
-              {advanceType === 'passedBall' && 'パスボール進塁'}
-            </h3>
-            <div className="space-y-2">
-              {state.runners.first && (
-                <>
-                  {!state.runners.second && <button onClick={() => handleRunnerAdvance('first', 'second')} className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold">１塁→２塁</button>}
-                  {!state.runners.third && <button onClick={() => handleRunnerAdvance('first', 'third')} className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold">１塁→３塁</button>}
-                  <button onClick={() => handleRunnerAdvance('first', 'home')} className="w-full py-3 bg-orange-600 text-white rounded-xl font-bold">１塁→ホーム（得点）</button>
-                </>
-              )}
-              {state.runners.second && (
-                <>
-                  {!state.runners.third && <button onClick={() => handleRunnerAdvance('second', 'third')} className="w-full py-3 bg-orange-500 text-white rounded-xl font-bold">２塁→３塁</button>}
-                  <button onClick={() => handleRunnerAdvance('second', 'home')} className="w-full py-3 bg-orange-600 text-white rounded-xl font-bold">２塁→ホーム（得点）</button>
-                </>
-              )}
-              {state.runners.third && (
-                <button onClick={() => handleRunnerAdvance('third', 'home')} className="w-full py-3 bg-orange-600 text-white rounded-xl font-bold">３塁→ホーム（得点）</button>
-              )}
-            </div>
-            <button onClick={() => setShowRunnerAdvanceModal(false)} className="w-full mt-4 py-3 bg-secondary text-foreground rounded-xl font-bold">キャンセル</button>
-          </div>
-        </div>
-      )}
+      {showRunnerControl && <RunnerControlModal runners={state.runners} onConfirm={handleRunnerControlConfirm} onClose={() => setShowRunnerControl(false)} />}
 
       {showEndConfirm && !isViewOnly && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
