@@ -10,7 +10,6 @@ const PLAY_DESCRIPTIONS: Record<string, string> = {
   'out-doublePlay': '併殺打',
   'out-sacrificeFly': '犠牲フライ',
   'out-sacrificeBunt': '犠牲バント',
-  // New runner out descriptions
   'out-runnerOutFirst': '１塁ランナーアウト',
   'out-runnerOutSecond': '２塁ランナーアウト',
   'out-runnerOutThird': '３塁ランナーアウト',
@@ -28,6 +27,13 @@ const PLAY_DESCRIPTIONS: Record<string, string> = {
   'error': 'エラー',
   'wildPitch': 'ワイルドピッチ',
   'passedBall': 'パスボール',
+  // Runner control (combined out/advance)
+  'runnerControl-sacrifice': '犠打・犠飛',
+  'runnerControl-fieldersChoice': 'フィルダースチョイス',
+  'runnerControl-error': 'エラー',
+  'runnerControl-wildPitch': 'ワイルドピッチ',
+  'runnerControl-passedBall': 'パスボール',
+  'runnerControl-other': '走塁プレー',
   // Runner advance descriptions
   'advance-errorFirstToSecond': 'エラー進塁（１塁→２塁）',
   'advance-errorFirstToThird': 'エラー進塁（１塁→３塁）',

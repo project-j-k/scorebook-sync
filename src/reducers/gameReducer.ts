@@ -101,7 +101,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           return newState;
         }
         case 'out': {
-          // Handle runner-specific outs
           if (runnersOut && runnersOut.length > 0) {
             return processRunnerOut(newState, runnersOut);
           }
@@ -112,11 +111,21 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           return processOut({ ...newState, count: { balls: 0, strikes: 0 } }, outsToAdd);
         }
         case 'runnerOut': {
-          // Process runner out at specific base
           if (runnersOut && runnersOut.length > 0) {
             return processRunnerOut(newState, runnersOut);
           }
           return newState;
+        }
+        case 'runnerControl': {
+          // Handle combined runner out and advance
+          let resultState = newState;
+          if (runnersOut && runnersOut.length > 0) {
+            resultState = processRunnerOut(resultState, runnersOut);
+          }
+          if (runnersAdvance && runnersAdvance.length > 0) {
+            resultState = processRunnerAdvance(resultState, runnersAdvance);
+          }
+          return resultState;
         }
         case 'hit':
           return processHit(newState, subType || 'single');
@@ -128,7 +137,6 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
         case 'caughtStealing':
           return processOut(newState, 1);
         case 'advance': {
-          // Process runner advancement (error, wild pitch, passed ball)
           if (runnersAdvance && runnersAdvance.length > 0) {
             return processRunnerAdvance(newState, runnersAdvance);
           }
