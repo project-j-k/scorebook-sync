@@ -28,6 +28,25 @@ const PLAY_DESCRIPTIONS: Record<string, string> = {
   'error': 'エラー',
   'wildPitch': 'ワイルドピッチ',
   'passedBall': 'パスボール',
+  // Runner advance descriptions
+  'advance-errorFirstToSecond': 'エラー進塁（１塁→２塁）',
+  'advance-errorFirstToThird': 'エラー進塁（１塁→３塁）',
+  'advance-errorFirstToHome': 'エラー進塁（１塁→ホーム）',
+  'advance-errorSecondToThird': 'エラー進塁（２塁→３塁）',
+  'advance-errorSecondToHome': 'エラー進塁（２塁→ホーム）',
+  'advance-errorThirdToHome': 'エラー進塁（３塁→ホーム）',
+  'advance-wildPitchFirstToSecond': 'WP進塁（１塁→２塁）',
+  'advance-wildPitchFirstToThird': 'WP進塁（１塁→３塁）',
+  'advance-wildPitchFirstToHome': 'WP進塁（１塁→ホーム）',
+  'advance-wildPitchSecondToThird': 'WP進塁（２塁→３塁）',
+  'advance-wildPitchSecondToHome': 'WP進塁（２塁→ホーム）',
+  'advance-wildPitchThirdToHome': 'WP進塁（３塁→ホーム）',
+  'advance-passedBallFirstToSecond': 'PB進塁（１塁→２塁）',
+  'advance-passedBallFirstToThird': 'PB進塁（１塁→３塁）',
+  'advance-passedBallFirstToHome': 'PB進塁（１塁→ホーム）',
+  'advance-passedBallSecondToThird': 'PB進塁（２塁→３塁）',
+  'advance-passedBallSecondToHome': 'PB進塁（２塁→ホーム）',
+  'advance-passedBallThirdToHome': 'PB進塁（３塁→ホーム）',
 };
 
 export const getPlayDescription = (type: string, subType?: string): string => {

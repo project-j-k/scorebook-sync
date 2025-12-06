@@ -1,6 +1,6 @@
 import { GameState, GameAction } from '@/types/baseball';
 import { createInitialTeam, generateId, getCurrentBatter, advanceBatter } from '@/utils/gameUtils';
-import { processOut, processWalk, processHit, processHomerun, processRunnerOut } from '@/utils/gameLogic';
+import { processOut, processWalk, processHit, processHomerun, processRunnerOut, processRunnerAdvance } from '@/utils/gameLogic';
 import { getPlayDescription } from '@/constants/playDescriptions';
 
 export const initialGameState: GameState = {
@@ -48,7 +48,7 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
       return { ...state, ...action.payload, lastSyncedAt: Date.now() };
 
     case 'RECORD_PLAY': {
-      const { type, subType, runnersOut } = action.payload;
+      const { type, subType, runnersOut, runnersAdvance } = action.payload;
       const batter = getCurrentBatter(state);
       if (!batter) return state;
 
@@ -127,6 +127,13 @@ export const gameReducer = (state: GameState, action: GameAction): GameState => 
           return processWalk(newState);
         case 'caughtStealing':
           return processOut(newState, 1);
+        case 'advance': {
+          // Process runner advancement (error, wild pitch, passed ball)
+          if (runnersAdvance && runnersAdvance.length > 0) {
+            return processRunnerAdvance(newState, runnersAdvance);
+          }
+          return newState;
+        }
         default:
           return newState;
       }
